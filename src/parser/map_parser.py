@@ -1,34 +1,105 @@
-# class parser:
-#     def __init__(self, nb_drones):
-
+parsing = []
 connections = []
 hub = []
+is_start_there = 0
+is_end_there = 0
+
+
+class MapParser:
+    def __init__(self):
+        self.nb_drones = 0
+        self.hubs = []
+        self.connections = []
+
+    def read_file(self, path):
+        with open("../../maps/easy/01_linear_path.txt", "r") as file:
+            for num, line in enumerate(file, start=1):
+
+                cleanedline = line.strip('\n').strip(' ')
+
+                if not cleanedline or cleanedline.startswith('#'):
+                    continue
+
+                key, value = cleanedline.split(':')
+                key = key.strip(' ')
+                value = value.strip(' ')
+
+                if key == "nb_drones":
+                    self.nb_drones = int(value)
+
+                elif key in ("start_hub", "hub", "end_hub"):
+                    value = value.split(' ')
+
+                    if len(value) == 4:
+                        self.hubs.append(
+                            {
+                                'type': key,
+                                'name': value[0],
+                                'x': value[1],
+                                'y': value[2],
+                                'meta_data': value[3]
+                            }
+                        )
+                    elif len(value) == 3:
+                        self.hubs.append(
+                            {
+                                'type': key,
+                                'name': value[0],
+                                'x': value[1],
+                                'y': value[2],
+                            }
+                        )
+
+                elif key == "connection":
+                    self.connections.append(value)
+
+
+hubs = []
+connections = []
+nb_drones = 0
+
 
 with open("../../maps/easy/01_linear_path.txt", "r") as file:
-    for line in file:
-        if line.startswith("#"):
+    for num, line in enumerate(file, start=1):
+
+        cleanedline = line.strip('\n').strip(' ')
+
+        if not cleanedline or cleanedline.startswith('#'):
             continue
-        if line.startswith("\n"):
-            continue
-        if "nb_drones" in line:
-            print(line.split(':')[1].strip(' '))
-        if "start_hub" in line:
-            print(line.split(':')[1].strip(' ').strip('\n').split(' '))
-        if "end_hub" in line:
-            print(line.split(':')[1].strip(' ').strip('\n').split(' '))
-        if "hub" in line:
-            hub.append(line.strip('\n').strip('#').split(":")[1])
-        if "connection" in line:
-            connections.append(line.split(':')[1].strip('\n'))
-print(hub)
+
+        key, value = cleanedline.split(':')
+        key = key.strip(' ')
+        value = value.strip(' ')
+
+        if key == "nb_drones":
+            nb_drones = int(value)
+
+        elif key in ("start_hub", "hub", "end_hub"):
+            value = value.split(' ')
+
+            if len(value) == 4:
+                hubs.append(
+                    {
+                        'type': key,
+                        'name': value[0],
+                        'x': value[1],
+                        'y': value[2],
+                        'meta_data': value[3]
+                    }
+                )
+            elif len(value) == 3:
+                hubs.append(
+                    {
+                        'type': key,
+                        'name': value[0],
+                        'x': value[1],
+                        'y': value[2],
+                    }
+                )
+
+        elif key == "connection":
+            connections.append(value)
+
+print(nb_drones)
 print(connections)
-
-
-# ['start_hub', ' start 0 0 [color=green]\n']
-# ['hub', ' waypoint1 1 0 [color=blue]\n']
-# ['hub', ' waypoint2 2 0 [color=blue]\n']
-# ['end_hub', ' goal 3 0 [color=red]\n']
-# ['\n']
-# ['connection', ' start-waypoint1\n']
-# ['connection', ' waypoint1-waypoint2\n']
-# ['connection', ' waypoint2-goal\n']
+print(hubs)
