@@ -1,8 +1,10 @@
-parsing = []
-connections = []
-hub = []
-is_start_there = 0
-is_end_there = 0
+import sys
+from .exceptions import DuplicateName
+from .exceptions import ConnectNameNotFound
+from .exceptions import StartOrEndNotFound, PositiveNumber
+
+
+ALLOWED_ZONES = {"normal", "blocked", "restricted", "priority"}
 
 
 class MapParser:
@@ -11,8 +13,8 @@ class MapParser:
         self.hubs = []
         self.connections = []
 
-    def read_file(self, path):
-        with open("../../maps/easy/01_linear_path.txt", "r") as file:
+    def read_file(self, path: str):
+        with open(path, "r") as file:
             for num, line in enumerate(file, start=1):
 
                 cleanedline = line.strip('\n').strip(' ')
@@ -22,84 +24,150 @@ class MapParser:
 
                 key, value = cleanedline.split(':')
                 key = key.strip(' ')
-                value = value.strip(' ')
+                value: str = value.strip(' ')
 
                 if key == "nb_drones":
                     self.nb_drones = int(value)
 
-                elif key in ("start_hub", "hub", "end_hub"):
-                    value = value.split(' ')
+                    if self.nb_drones <= 0:
+                        raise PositiveNumber(
+                            f"error in line {num} nb_drones must be greath"
+                            " than from 0.")
 
-                    if len(value) == 4:
+                elif key in ("start_hub", "hub", "end_hub"):
+
+                    if '[' in value and ']' in value:
+
+                        main_part = value.split('[')[0]
+                        meta_data_part = value.strip(']').split('[')[1]
+
+                        name, x, y = main_part.strip(' ').split(' ')
+
+                        # # color = meta_data_part.split('=')
+                        color = None
+                        zone = 'normal'
+                        max_drones = 1
+
+                        for item in meta_data_part.split(' '):
+                            if 'color' in item:
+                                color = item.split('=')[1]
+
+                            if "max_drones" in item:
+                                max_drones = item.split('=')[1]
+
+                            if 'zone' in item:
+                                is_zone_there = item.split('=')[1]
+                                if is_zone_there in ALLOWED_ZONES:
+                                    zone = is_zone_there
+
+                            # print(meta_data_part)
                         self.hubs.append(
                             {
                                 'type': key,
-                                'name': value[0],
-                                'x': value[1],
-                                'y': value[2],
-                                'meta_data': value[3]
+                                'name': name,
+                                'x': x,
+                                'y': y,
+                                'meta_data': {
+                                    'zone': zone,
+                                    'color': color,
+                                    'max_drones': int(max_drones)
+                                }
                             }
                         )
-                    elif len(value) == 3:
+                    else:
+                        main_part = value.split('[')[0]
+                        name, x, y = main_part.strip(' ').split(' ')
+
+                        color = None
+                        zone = 'normal'
+                        max_drones = 1
+
                         self.hubs.append(
                             {
                                 'type': key,
-                                'name': value[0],
-                                'x': value[1],
-                                'y': value[2],
+                                'name': name,
+                                'x': x,
+                                'y': y,
+                                'meta_data': {
+                                    'zone': zone,
+                                    'color': color,
+                                    'max_drones': int(max_drones)
+                                }
                             }
                         )
 
                 elif key == "connection":
-                    self.connections.append(value)
+                    if '[' in value and ']' in value:
 
+                        main_part = value.split('[')[0]
+                        meta_data_part = value.strip(']').split('[')[1]
 
-hubs = []
-connections = []
-nb_drones = 0
+                        first, second = main_part.strip(' ').split('-')
+                        max_capacity = 1
 
+                        if ('max_link_capacity' in meta_data_part
+                                or 'max_capacity' in meta_data_part):
+                            max_capacity = meta_data_part.split('=')[1]
 
-with open("../../maps/easy/01_linear_path.txt", "r") as file:
-    for num, line in enumerate(file, start=1):
+                        self.connections.append(
+                            {
+                                'type': key,
+                                'from': first,
+                                'to': second,
+                                'meta_data': {
+                                    'max_capacity': int(max_capacity)
+                                }
+                            }
+                        )
 
-        cleanedline = line.strip('\n').strip(' ')
+                    else:
 
-        if not cleanedline or cleanedline.startswith('#'):
-            continue
+                        for item in value.split(' '):
+                            first = item.split('-')[0]
+                            second = item.split('-')[1]
 
-        key, value = cleanedline.split(':')
-        key = key.strip(' ')
-        value = value.strip(' ')
+                        self.connections.append(
+                            {
+                                'type': key,
+                                'from': first,
+                                'to': second,
+                                'meta_data': {
+                                    'max_capacity': 1
+                                }
+                            }
+                        )
 
-        if key == "nb_drones":
-            nb_drones = int(value)
+    def check_errors(self):
+        end_hub_is_there = 0
+        start_hub_is_there = 0
+        is_duplicat = 0
+        name_of_hubs = []
 
-        elif key in ("start_hub", "hub", "end_hub"):
-            value = value.split(' ')
+        for hubs in self.hubs:
 
-            if len(value) == 4:
-                hubs.append(
-                    {
-                        'type': key,
-                        'name': value[0],
-                        'x': value[1],
-                        'y': value[2],
-                        'meta_data': value[3]
-                    }
-                )
-            elif len(value) == 3:
-                hubs.append(
-                    {
-                        'type': key,
-                        'name': value[0],
-                        'x': value[1],
-                        'y': value[2],
-                    }
-                )
+            if hubs['type'] == "end_hub":
+                end_hub_is_there += 1
 
-        elif key == "connection":
-            connections.append(value)
+            if hubs['type'] == "start_hub":
+                start_hub_is_there += 1
 
-print(nb_drones)
-print(connections)
-print(hubs)
+            if hubs['name'] in name_of_hubs:
+                is_duplicat = 1
+
+            name_of_hubs.append(hubs['name'])
+
+        if end_hub_is_there != 1:
+            raise StartOrEndNotFound("end_hub not found")
+
+        if start_hub_is_there != 1:
+            raise StartOrEndNotFound("start_hub not found")
+
+        if is_duplicat:
+            raise DuplicateName()
+
+        for x in self.connections:
+            if x['from'] not in name_of_hubs:
+                raise ConnectNameNotFound()
+
+            if x['to'] not in name_of_hubs:
+                raise ConnectNameNotFound()
