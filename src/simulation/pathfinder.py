@@ -1,45 +1,90 @@
-# graph = {
-#     'start': ['waypoint1'],
-#     'waypoint1': ['start', 'waypoint2'],
-#     'waypoint2': ['waypoint1', 'goal'],
-#     'goal': ['waypoint2']}
-
-
-# class PathFinder:
-#     def bfs(graph):
-#         pass
-
 from collections import deque
+from .graph import Graph
+import heapq
+
+from rich import print
 
 
-# class PathFinder():
+class PathFinder:
+    def bfs(self, graph: Graph):
 
-graph = {
-    0: [1, 2],
-    1: [2, 3],
-    2: [3],
-    3: []
-}
+        start = graph.start_node
 
-start_point = 0
+        visited = set()
+        queue = deque([(start, [start])])
+        visited.add(start)
 
+        while queue:
 
-visited = set()
-queue = deque([start_point])
-visited.add(start_point)
-order = []
+            node, current_path = queue.popleft()
 
-while queue:
-    node = queue.popleft()
-    order.append(node)
+            if node == graph.end_node:
+                return current_path
 
-    for neighbor in graph[node]:
+            for neighbor in graph.adj[node]:
 
-        if neighbor not in visited:
-            visited.add(neighbor)
-            queue.append(neighbor)
+                if neighbor not in visited:
+                    visited.add(neighbor)
+                    queue.append((neighbor, current_path + [neighbor]))
 
-print(order)
+    def find_k_paths(self, graph: Graph, k: int):
 
+        start = graph.start_node
+        end = graph.end_node
+        queue = deque([(start, [start])])
+        paths = []
 
-# 0 1 2 3
+        while queue:
+
+            node, current_path = queue.popleft()
+
+            if node == end:
+                paths.append(current_path)
+                if k == len(paths):
+                    return paths
+                continue
+
+            for neighbor in graph.adj[node]:
+                if neighbor not in current_path:
+                    queue.append((neighbor,   current_path + [neighbor]))
+
+        return paths
+
+    def dijkstra(self, graph: Graph, k: int) -> list[list]:
+
+        pq = []
+        distance = {graph.start_node: 0}
+        heapq.heappush(pq, (0, graph.start_node, [graph.start_node]))
+        paths = []
+
+        while pq:
+            current_cost, node, path = heapq.heappop(pq)
+
+            if node == graph.end_node:
+                paths.append(path)
+                if k == len(paths):
+                    return paths
+                continue
+
+            for neighbor in graph.adj[node]:
+                weight = 1
+
+                if graph.nodes[neighbor].type == "priority":
+                    weight = 1
+
+                if graph.nodes[neighbor].type == "restricted":
+                    weight = 2
+
+                if graph.nodes[neighbor].type == "blocked":
+                    continue
+
+                new_cost = current_cost + weight
+
+                if neighbor not in path:
+
+                    if new_cost < distance.get(neighbor, float('inf')):
+                        # distance[neighbor] = new_cost
+                        heapq.heappush(
+                            pq, (new_cost, neighbor, path + [neighbor]))
+
+        return paths

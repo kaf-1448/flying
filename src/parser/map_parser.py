@@ -1,4 +1,3 @@
-import sys
 from .exceptions import DuplicateName
 from .exceptions import ConnectNameNotFound
 from .exceptions import StartOrEndNotFound, PositiveNumber
@@ -65,8 +64,8 @@ class MapParser:
                             {
                                 'type': key,
                                 'name': name,
-                                'x': x,
-                                'y': y,
+                                'x': int(x),
+                                'y': int(y),
                                 'meta_data': {
                                     'zone': zone,
                                     'color': color,
@@ -86,8 +85,8 @@ class MapParser:
                             {
                                 'type': key,
                                 'name': name,
-                                'x': x,
-                                'y': y,
+                                'x': int(x),
+                                'y': int(y),
                                 'meta_data': {
                                     'zone': zone,
                                     'color': color,
