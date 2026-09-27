@@ -2,42 +2,39 @@ from parser import map_parser
 from simulation.graph import Graph
 from simulation.pathfinder import PathFinder
 from simulation.simulation import Drone, Simulation
+from simulation.visualizer import Visualizer
 import sys
 from rich import print
 from collections import deque
 import heapq
 
 
-parser = map_parser.MapParser()
-parser.read_file(sys.argv[1])
+try:
+    parser = map_parser.MapParser()
+    parser.read_file(sys.argv[1])
+    # parser.check_errors()
 
-# print(parser.connections)
+    print(parser.nb_drones)
 
+    print(parser.connections)
 
-data_graph = Graph()
+    graph = Graph()
 
+    graph.init_zones(parser)
+    graph.build_adjacent_list(parser)
 
-data_graph.init_zones(parser)
-data_graph.build_adjacent_list(parser)
-# print(data_graph.adj)
-# print(data_graph.nodes)
-# print(data_graph.adj)
-# print(data_graph.capacities)
+    path_f = PathFinder()
 
+    p = path_f.dijkstra(graph, graph.start_node, graph.end_node)
+    path = path_f.yen_algorithm(graph, 2, p, graph.end_node)
 
-# print(data_graph.adj)
+    simu = Simulation(Drone, parser.nb_drones, path)
+    history = simu.turns_history
 
-path_f = PathFinder()
-# path = path_f.bfs(data_graph)
+    simu.start_simulation(graph)
+    vis = Visualizer(graph, parser, history)
+    vis.run()
 
-result = path_f.find_k_paths(
-    data_graph, 2)
-# print(result)
-
-path = path_f.dijkstra(data_graph, 6)
-
-
-simu = Simulation(Drone, parser.nb_drones, path)
-simu.start_simulation(data_graph)
-
-print(simu.turns_history)
+    print(simu.turns_history)
+except Exception as e:
+    print(e)

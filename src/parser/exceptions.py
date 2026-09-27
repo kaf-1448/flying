@@ -6,6 +6,14 @@ class DuplicateName(Exception):
     pass
 
 
+class DuplicateConnectionError(Exception):
+    pass
+
+
+class StartByNmDrone(Exception):
+    pass
+
+
 class PositiveNumber(Exception):
     pass
 

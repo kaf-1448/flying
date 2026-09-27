@@ -72,7 +72,7 @@ class Simulation:
                             occupied.append(next_hub)
                             edge_used.append(edge)
                             moves.append(
-                                f"D{d.id}-{d.path[d.position]} {d.path[d.position + 1]}"
+                                f"D{d.id}-{d.path[d.position]}-{d.path[d.position + 1]}"
                             )
                             d.position += 1
 

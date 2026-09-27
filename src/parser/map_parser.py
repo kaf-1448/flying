@@ -1,6 +1,7 @@
-from .exceptions import DuplicateName
-from .exceptions import ConnectNameNotFound
+from .exceptions import DuplicateName, NameMapsParsingError
+from .exceptions import ConnectNameNotFound, StartByNmDrone
 from .exceptions import StartOrEndNotFound, PositiveNumber
+from .exceptions import DuplicateConnectionError
 
 
 ALLOWED_ZONES = {"normal", "blocked", "restricted", "priority"}
@@ -14,6 +15,12 @@ class MapParser:
 
     def read_file(self, path: str):
         with open(path, "r") as file:
+            end_hub_is_there = 0
+            start_hub_is_there = 0
+            number_drones = 0
+            name_hubs = []
+            seen_connection = set()
+
             for num, line in enumerate(file, start=1):
 
                 cleanedline = line.strip('\n').strip(' ')
@@ -26,12 +33,20 @@ class MapParser:
                 value: str = value.strip(' ')
 
                 if key == "nb_drones":
-                    self.nb_drones = int(value)
+
+                    try:
+                        self.nb_drones = int(value)
+
+                    except ValueError:
+                        raise ValueError(
+                            f"Error in line {num} nb_drones must"
+                            " be number")
 
                     if self.nb_drones <= 0:
                         raise PositiveNumber(
-                            f"error in line {num} nb_drones must be greath"
+                            f"Error in line {num} nb_drones must be greath"
                             " than from 0.")
+                    number_drones += 1
 
                 elif key in ("start_hub", "hub", "end_hub"):
 
@@ -42,7 +57,11 @@ class MapParser:
 
                         name, x, y = main_part.strip(' ').split(' ')
 
-                        # # color = meta_data_part.split('=')
+                        if '-' in name:
+                            raise NameMapsParsingError(
+                                f"Error in line {num} must not '-' in zone"
+                                " word")
+
                         color = None
                         zone = 'normal'
                         max_drones = 1
@@ -59,7 +78,13 @@ class MapParser:
                                 if is_zone_there in ALLOWED_ZONES:
                                     zone = is_zone_there
 
-                            # print(meta_data_part)
+                        if name not in name_hubs:
+                            name_hubs.append(name)
+                        else:
+                            raise DuplicateName(
+                                f"Error in line {num} {name} must not"
+                                " duplicate")
+
                         self.hubs.append(
                             {
                                 'type': key,
@@ -73,13 +98,26 @@ class MapParser:
                                 }
                             }
                         )
+
                     else:
                         main_part = value.split('[')[0]
                         name, x, y = main_part.strip(' ').split(' ')
 
+                        if '-' in name:
+                            raise NameMapsParsingError(
+                                f"Error in line {num} must not '-' in zone"
+                                " word")
+
                         color = None
                         zone = 'normal'
                         max_drones = 1
+
+                        if name not in name_hubs:
+                            name_hubs.append(name)
+                        else:
+                            raise DuplicateName(
+                                f"Error in line {num} {name} must not"
+                                " duplicate")
 
                         self.hubs.append(
                             {
@@ -108,6 +146,20 @@ class MapParser:
                                 or 'max_capacity' in meta_data_part):
                             max_capacity = meta_data_part.split('=')[1]
 
+                        if first not in name_hubs or second not in name_hubs:
+                            raise ConnectNameNotFound(
+                                f"Error in line {num} this {first} not found"
+                                " as zone")
+
+                        edge = tuple(sorted([first, second]))
+
+                        if edge in seen_connection:
+                            raise DuplicateConnectionError(
+                                f"Error in line {num} connection is there"
+                                " before")
+
+                        seen_connection.add(edge)
+
                         self.connections.append(
                             {
                                 'type': key,
@@ -125,6 +177,20 @@ class MapParser:
                             first = item.split('-')[0]
                             second = item.split('-')[1]
 
+                        if first not in name_hubs or second not in name_hubs:
+                            raise ConnectNameNotFound(
+                                f"Error in line {num} this {first} not found"
+                                " as zone")
+
+                        edge = tuple(sorted([first, second]))
+
+                        if edge in seen_connection:
+                            raise DuplicateConnectionError(
+                                f"Error in line {num} connection is there "
+                                "before")
+
+                        seen_connection.add(edge)
+
                         self.connections.append(
                             {
                                 'type': key,
@@ -136,37 +202,34 @@ class MapParser:
                             }
                         )
 
-    def check_errors(self):
-        end_hub_is_there = 0
-        start_hub_is_there = 0
-        is_duplicat = 0
-        name_of_hubs = []
+                if self.nb_drones == 0:
+                    raise StartByNmDrone(
+                        f"Error in line {num} the number of Drones must be"
+                        " in the firt file")
 
-        for hubs in self.hubs:
+                elif number_drones != 1:
+                    raise DuplicateName(
+                        f"Error in line {num} the number of Drones must be"
+                        " not duplicat")
 
-            if hubs['type'] == "end_hub":
-                end_hub_is_there += 1
+            for key in self.hubs:
+                if key['type'] == "start_hub":
+                    start_hub_is_there += 1
+                elif key['type'] == "end_hub":
+                    end_hub_is_there += 1
 
-            if hubs['type'] == "start_hub":
-                start_hub_is_there += 1
+                if end_hub_is_there > 1:
+                    raise DuplicateName(
+                        f"Error in line {num} end_hubs must not duplicate")
 
-            if hubs['name'] in name_of_hubs:
-                is_duplicat = 1
+                if start_hub_is_there > 1:
+                    raise DuplicateName(
+                        f"Error in line {num} start_hubs must not duplicate")
 
-            name_of_hubs.append(hubs['name'])
+            if end_hub_is_there == 0:
+                raise StartOrEndNotFound(
+                    f"Error in line {num} end_hubs not found")
 
-        if end_hub_is_there != 1:
-            raise StartOrEndNotFound("end_hub not found")
-
-        if start_hub_is_there != 1:
-            raise StartOrEndNotFound("start_hub not found")
-
-        if is_duplicat:
-            raise DuplicateName()
-
-        for x in self.connections:
-            if x['from'] not in name_of_hubs:
-                raise ConnectNameNotFound()
-
-            if x['to'] not in name_of_hubs:
-                raise ConnectNameNotFound()
+            if start_hub_is_there == 0:
+                raise StartOrEndNotFound(
+                    f"Error in line {num} start_hubs not found")

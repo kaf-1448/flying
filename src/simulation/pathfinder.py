@@ -50,27 +50,24 @@ class PathFinder:
 
         return paths
 
-    def dijkstra(self, graph: Graph, k: int) -> list[list]:
+    def dijkstra(self, graph: Graph, start: str, end: str) -> list[list]:
 
         pq = []
-        distance = {graph.start_node: 0}
-        heapq.heappush(pq, (0, graph.start_node, [graph.start_node]))
-        paths = []
+        distance = {start: 0}
+        heapq.heappush(pq, (0, start, [start]))
+        # paths = []
 
         while pq:
-            current_cost, node, path = heapq.heappop(pq)
+            cost, node, path = heapq.heappop(pq)
 
-            if node == graph.end_node:
-                paths.append(path)
-                if k == len(paths):
-                    return paths
-                continue
+            if node == end:
+                return cost, path
 
             for neighbor in graph.adj[node]:
                 weight = 1
 
                 if graph.nodes[neighbor].type == "priority":
-                    weight = 1
+                    weight = 0.9
 
                 if graph.nodes[neighbor].type == "restricted":
                     weight = 2
@@ -78,13 +75,66 @@ class PathFinder:
                 if graph.nodes[neighbor].type == "blocked":
                     continue
 
-                new_cost = current_cost + weight
+                new_cost = cost + weight
 
                 if neighbor not in path:
 
                     if new_cost < distance.get(neighbor, float('inf')):
-                        # distance[neighbor] = new_cost
+                        distance[neighbor] = new_cost
                         heapq.heappush(
                             pq, (new_cost, neighbor, path + [neighbor]))
+
+        return None
+
+    def cost(self, graph: Graph, path: list):
+        cost = 0
+        for i in range(len(path) - 1):
+            node = path[i + 1]
+            if graph.nodes[node].type == "restricted":
+                cost += 2
+            elif graph.nodes[node].type == "priority":
+                cost += 0.9
+            else:
+                cost += 1
+        return cost
+
+    def yen_algorithm(self, graph: Graph, k: int, path: list, end: str) -> list[list]:
+
+        paths = []
+        condidate_paths = []
+        seen = set()
+        heapq.heappush(condidate_paths, path)
+        seen.add(tuple(path[1]))
+
+        while len(paths) < k and condidate_paths:
+
+            i = 0
+            c, p = heapq.heappop(condidate_paths)
+            paths.append(p)
+
+            while i < len(p):
+
+                spur_node = p[i]
+                root_path = p[:i+1]
+
+                for neighbor in graph.adj[spur_node]:
+
+                    if neighbor not in root_path and neighbor not in p[:i+2]:
+
+                        res = self.dijkstra(graph, neighbor, end)
+
+                        if res is not None:
+                            n_c, n_p = res
+                            total_cost = (self.cost(graph,
+                                                    root_path) +
+                                          n_c +
+                                          graph.capacities[(spur_node, neighbor)])
+
+                            new_path = tuple(root_path + n_p)
+                            if new_path not in seen:
+                                heapq.heappush(condidate_paths,
+                                               (total_cost, root_path + n_p))
+                                seen.add(new_path)
+                i += 1
 
         return paths
