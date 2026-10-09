@@ -187,7 +187,7 @@ class MapParser:
                     if '[' in value and ']' in value:
 
                         main_part = value.split('[')[0]
-                        meta_data_part = value.strip(']').split('[')
+                        meta_data_part = value.strip(']').split('[')[1]
 
                         first, second = main_part.strip(' ').split('-')
                         max_capacity: int = 1
