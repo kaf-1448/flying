@@ -28,3 +28,7 @@ class StartOrEndNotFound(Exception):
 
 class ConnectNameNotFound(Exception):
     pass
+
+
+class MetaDataError(Exception):
+    pass

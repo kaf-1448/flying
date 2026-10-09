@@ -1,27 +1,18 @@
+from typing import Dict, List, Tuple, Optional
 from .zone import Zone
-# from ..parser.map_parser import MapParser
-# from ..parser.map_parser import MapParser
+from parser.map_parser import MapParser
 
 
-# class Connections:
-#     def __init__():
-#         from_zone =
-#         to_zone =
+class Graph:
+    def __init__(self) -> None:
+        self.nodes: Dict[str, Zone] = {}
+        self.adj: Dict[str, List[str]] = {}
+        self.start_node: Optional[str] = None
+        self.end_node: Optional[str] = None
+        self.capacities: Dict[Tuple[str, str], int] = {}
 
-
-class Graph():
-    def __init__(self):
-        self.nodes = {}
-        self.adj = {}
-        self.start_node = None
-        self.end_node = None
-        self.capacities = {}
-        # self.position_nodes = {}
-
-    def init_zones(self, parser: MapParser):
-
+    def init_zones(self, parser: MapParser) -> None:
         for hub in parser.hubs:
-
             self.adj[hub['name']] = []
 
             if hub['type'] == 'start_hub':
@@ -39,12 +30,11 @@ class Graph():
                 hub['meta_data']['max_drones']
             )
 
-    def build_adjacent_list(self, parser: MapParser):
-
+    def build_adjacent_list(self, parser: MapParser) -> None:
         for conct in parser.connections:
-            u = conct['from']
-            v = conct['to']
-            cap = conct['meta_data']['max_capacity']
+            u: str = conct['from']
+            v: str = conct['to']
+            cap: int = conct['meta_data']['max_capacity']
 
             self.adj[u].append(v)
             self.adj[v].append(u)

@@ -1,23 +1,21 @@
-from rich import print
-import heapq
-
-graph = {
-    "A": [("B", 2), ("C", 3)],
-    "B": [("D", 4), ("C", 2)],
-    "C": [("D", 2)],
-    "D": []
-}
+seen = set()
 
 
-def k_short_path(graph) -> list:
-    pq = []
-    heapq.heappush(pq, (0, 'A'))
-    distance = {}
-    count = {}
+s = "connection: start-waypoint1  [max_capacity=1]"
 
-    while pq:
-
-        cost, node = heapq.heappop(pq)
+key, value = s.split(':')
 
 
-k_short_path(graph)
+data, meta_data = value.strip(']').split('[')
+
+print(meta_data.split(' '))
+
+
+# for item in meta_data.split(' '):
+
+#     key = item.split('=')[0]
+#     if key in {'color', 'max_drones', 'zone'} and key not in seen:
+#         seen.add(key)
+#         print(key)
+#     else:
+#         print(f'Error {key}')
