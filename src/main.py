@@ -6,35 +6,42 @@ from simulation.simulation import Drone, Simulation
 from simulation.visualizer import Visualizer
 
 
-try:
-    if len(sys.argv) < 2:
-        print("Usage: python3 src/main.py <map_file>")
-        sys.exit(1)
+def main() -> None:
+    try:
 
-    parser = map_parser.MapParser()
-    parser.read_file(sys.argv[1])
+        if len(sys.argv) < 2:
+            print("Error File not found must be do that")
+            print("Usage: python3 src/main.py <map_file>")
+            sys.exit(1)
 
-    graph = Graph()
-    graph.init_zones(parser)
-    graph.build_adjacent_list(parser)
+        parser = map_parser.MapParser()
+        parser.read_file(sys.argv[1])
 
-    if graph.start_node is None or graph.end_node is None:
-        raise ValueError("Start or End hub not found in graph")
+        graph = Graph()
+        graph.init_zones(parser)
+        graph.build_adjacent_list(parser)
 
-    path_f = PathFinder()
+        if graph.start_node is None or graph.end_node is None:
+            raise ValueError("Start or End hub not found in graph")
 
-    p = path_f.dijkstra(graph, graph.start_node, graph.end_node)
-    if p is None:
-        raise ValueError("No path found between start and end hubs")
+        path_f = PathFinder()
 
-    paths = path_f.yen_algorithm(graph, 2, p, graph.end_node)
+        p = path_f.dijkstra(graph, graph.start_node, graph.end_node)
+        if p is None:
+            raise ValueError("No path found between start and end hubs")
 
-    simu = Simulation(Drone, parser.nb_drones, paths)
-    history = simu.turns_history
+        paths = path_f.yen_algorithm(graph, 2, p, graph.end_node)
 
-    simu.start_simulation(graph)
-    vis = Visualizer(graph, parser, history)
-    vis.run()
+        simu = Simulation(Drone, parser.nb_drones, paths)
+        history = simu.turns_history
 
-except Exception as e:
-    print(e)
+        simu.start_simulation(graph)
+        vis = Visualizer(graph, parser, history)
+        vis.run()
+
+    except Exception as e:
+        print(e)
+
+
+if __name__ == "__main__":
+    main()

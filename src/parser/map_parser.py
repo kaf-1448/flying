@@ -3,6 +3,7 @@ from .exceptions import DuplicateName, NameMapsParsingError
 from .exceptions import ConnectNameNotFound, StartByNmDrone
 from .exceptions import StartOrEndNotFound, PositiveNumber
 from .exceptions import DuplicateConnectionError, MetaDataError
+from .exceptions import SyntaxError
 
 
 ALLOWED_ZONES: Set[str] = {"normal", "blocked", "restricted", "priority"}
@@ -15,6 +16,10 @@ class MapParser:
         self.connections: List[Dict[str, Any]] = []
 
     def read_file(self, path: str) -> None:
+
+        if path is None:
+            raise FileNotFoundError("Error File not found")
+
         with open(path, "r") as file:
             end_hub_is_there: int = 0
             start_hub_is_there: int = 0
@@ -56,9 +61,27 @@ class MapParser:
                         try:
 
                             main_part = value.split('[')[0]
-                            meta_data_part = value.strip(']').split('[')[1]
+                            parts = main_part.split()
+                            if len(parts) > 3:
+                                raise SyntaxError(
+                                    f"Error in line {num} extra data "
+                                    "must syntax must "
+                                    "coordinates (expected name, x, y)")
+                            elif len(parts) != 3:
+                                raise SyntaxError(
+                                    f"Error in line {num} missing "
+                                    "coordinates (expected name, x, y)")
 
-                            name, x, y = main_part.strip(' ').split(' ')
+                            meta_data_part = value.strip(']').split('[')[
+                                1]
+
+                            # if (len(meta_data_part.split()) > 1):
+                            #     raise SyntaxError(
+                            #         f"Error line in {num}"
+                            #         f"is extra data must syntax"
+                            #         f"as (name x y [meta data])")
+
+                            name, x, y = main_part.strip(' ').split()
 
                             if '-' in name:
                                 raise NameMapsParsingError(
@@ -70,7 +93,7 @@ class MapParser:
                             max_drones: int = 1
 
                             seen = set()
-                            for item in meta_data_part.split(' '):
+                            for item in meta_data_part.split():
 
                                 meta_key = item.split('=')[0]
 
@@ -95,7 +118,7 @@ class MapParser:
                                         if max_drones <= 0:
                                             raise PositiveNumber(
                                                 f"Error in line {num}"
-                                                "max_dronesmust "
+                                                "max_drones must "
                                                 "be greath than 0.")
                                         seen.add('max_drones')
 
@@ -109,10 +132,19 @@ class MapParser:
                                                 "in meta data"
                                             )
                                         seen.add('zone')
+                                elif (meta_key in {'color',
+                                                   'zone',
+                                                   'max_drones'} and
+                                      meta_key in seen):
+                                    raise MetaDataError(
+                                        f"Error in line {num} in meta data "
+                                        f"'{meta_key}' is there before"
+                                    )
+
                                 else:
                                     raise MetaDataError(
-                                        f"Error in line {num} in meta data"
-                                    )
+                                        f"Error in line {num} in meta data "
+                                        f"{meta_key} is must be not here")
 
                             if name not in name_hubs:
                                 name_hubs.append(name)
@@ -142,7 +174,21 @@ class MapParser:
                     elif '[' not in value and ']'not in value:
                         try:
                             main_part = value.split('[')[0]
-                            name, x, y = main_part.strip(' ').split(' ')
+                            parts = main_part.strip().split()
+
+                            if len(parts) > 3:
+                                garbage = " ".join(parts[3:])
+                                raise MetaDataError(
+                                    f"Error in line {num} extra data"
+                                    f" '{garbage}' is not allowed"
+                                )
+                            elif len(parts) < 3:
+                                raise MetaDataError(
+                                    f"Error in line {num} missing "
+                                    f"coordinates (expected name, x, y)"
+                                )
+
+                            name, x, y = parts[0], parts[1], parts[2]
 
                             if '-' in name:
                                 raise NameMapsParsingError(
@@ -180,36 +226,87 @@ class MapParser:
                     else:
                         raise MetaDataError(
                             f"Error in line {num} in meta data syntax"
+                            f" must be [zone=x ...]"
                         )
 
                 elif key == "connection":
 
                     if '[' in value and ']' in value:
 
-                        main_part = value.split('[')[0]
-                        meta_data_part = value.strip(']').split('[')[1]
+                        main_part = value.strip(' ').split('[')[0]
 
-                        first, second = main_part.strip(' ').split('-')
-                        max_capacity: int = 1
+                        if (len(main_part.split()) != 1
+                                or '-' not in main_part.split()[0]):
+                            raise SyntaxError(
+                                f"Error in line {num}"
+                                "must syntax"
+                                "node1-node2 [meta data]"
+                            )
 
-                        if ('max_link_capacity' in meta_data_part
-                                or 'max_capacity' in meta_data_part):
-                            try:
-                                max_capacity = int(
-                                    meta_data_part.split('=')[1])
-                            except ValueError:
-                                raise ValueError(
-                                    f"Error in line {num} max_capacity must"
-                                    " be number")
+                        node = main_part.strip().split('-')
 
-                            if max_capacity <= 0:
-                                raise PositiveNumber(
-                                    f"Error in line {num} max_capacity must be"
-                                    " greath than 0.")
-                        else:
+                        if len(node) > 2:
+                            raise SyntaxError(
+                                f"Error in line {num}"
+                                " extra data, must syntax"
+                                "node1-node2 [meta data] or"
+                                " node1-node2"
+                            )
+                        elif len(node) < 2:
+                            raise SyntaxError(
+                                f"Error in line {num}"
+                                " missing data, must syntax"
+                                "node1-node2 [meta data] or"
+                                " node1-node2"
+                            )
+
+                        conn_meta = (
+                            value.strip(']').split('[')[
+                                1].strip(' ').split())
+
+                        if len(conn_meta) == 0:
                             raise MetaDataError(
                                 f"Error in line {num} in meta data "
-                                "at conection part")
+                                "must be not Empty between []")
+
+                        elif len(conn_meta) != 1:
+                            raise SyntaxError(
+                                f"Error in line {num} extra data "
+                                "must syntax must "
+                                "coordinates (node1-node2 [meta data])")
+
+                        else:
+
+                            max_capacity: int = 1
+                            if (len(conn_meta) > 1):
+                                raise MetaDataError(
+                                    f"Error in line {num} in meta data "
+                                    "must be only max capacity or max link"
+                                    " capacity")
+                            elif (len(conn_meta) == 1 and (
+                                    conn_meta[0].split(
+                                        '=')[0] == "max_capacity"
+                                    or conn_meta[0].split('=')[0]
+                                    == "max_link_capacity")):
+                                try:
+                                    max_capacity = int(
+                                        conn_meta[0].split('=')[1])
+                                except ValueError:
+                                    raise ValueError(
+                                        f"Error in line {num} must be number")
+
+                                if max_capacity <= 0:
+                                    raise PositiveNumber(
+                                        f"Error in line {num}"
+                                        f" max_capacity must be"
+                                        " greath than 0.")
+                            else:
+                                raise MetaDataError(
+                                    f"Error in line {num} in meta data "
+                                    "must be only max capacity or max link"
+                                    " capacity")
+
+                        first, second = main_part.strip(' ').split('-')
 
                         if first not in name_hubs or second not in name_hubs:
                             raise ConnectNameNotFound(
@@ -240,11 +337,20 @@ class MapParser:
 
                     elif '[' not in value and ']' not in value:
 
-                        first = ""
-                        second = ""
-                        for item in value.split(' '):
-                            first = item.split('-')[0]
-                            second = item.split('-')[1]
+                        parts_conn = value.strip().split()
+
+                        if len(parts_conn) != 1 or '-' not in parts_conn[0]:
+                            raise MetaDataError(
+                                f"Error in line {num}: invalid"
+                                f" connection format")
+
+                        nodes = parts_conn[0].split('-')
+                        if len(nodes) != 2:
+                            raise MetaDataError(
+                                f"Error in line {num}: connection must"
+                                f" have exactly two hubs")
+
+                        first, second = nodes
 
                         if first not in name_hubs or second not in name_hubs:
                             raise ConnectNameNotFound(
@@ -274,7 +380,8 @@ class MapParser:
 
                     else:
                         raise MetaDataError(
-                            f"Error in line {num} in meta data syntax"
+                            f"Error in line {num} in meta data "
+                            f" syntax must be [max_capacity=x]"
                         )
 
                 if self.nb_drones == 0:

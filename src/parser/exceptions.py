@@ -32,3 +32,7 @@ class ConnectNameNotFound(Exception):
 
 class MetaDataError(Exception):
     pass
+
+
+class SyntaxError(Exception):
+    pass
