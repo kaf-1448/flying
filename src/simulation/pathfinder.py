@@ -151,12 +151,13 @@ class PathFinder:
                             )
 
                             new_path = tuple(root_path + n_p)
-                            if new_path not in seen:
-                                heapq.heappush(
-                                    condidate_paths,
-                                    (total_cost, root_path + n_p)
-                                )
-                                seen.add(new_path)
+                            if len(new_path) == len(set(new_path)):
+                                if new_path not in seen:
+                                    heapq.heappush(
+                                        condidate_paths,
+                                        (total_cost, root_path + n_p)
+                                    )
+                                    seen.add(new_path)
                 i += 1
 
         return paths

@@ -180,20 +180,20 @@ connection: waypoint2-goal
 
 ### Verbatim Simulation Output
 ```text
-Turn 1: D1-waypoint1
-Turn 2: D1-waypoint2 D2-waypoint1
-Turn 3: D1-goal D2-waypoint2
-Turn 4: D2-goal
+D1-waypoint1
+D1-waypoint2 D2-waypoint1
+D1-goal D2-waypoint2
+D2-goal
 ```
 
 ### Multi-Path & Restricted Zone Example (`maps/easy/02_simple_fork.txt`)
 ```text
-Turn 1: D1-start-junction D2-start-junction
-Turn 2: D1-junction D2-junction
-Turn 3: D1-path_a D2-path_b D3-start-junction D4-start-junction
-Turn 4: D1-goal D2-goal D3-junction D4-junction
-Turn 5: D3-path_a D4-path_b
-Turn 6: D3-goal D4-goal
+D1-start-junction D2-start-junction
+D1-junction D2-junction
+D1-path_a D2-path_b D3-start-junction D4-start-junction
+D1-goal D2-goal D3-junction D4-junction
+D3-path_a D4-path_b
+D3-goal D4-goal
 ```
 *(Notice D1 and D2 taking 2 turns across the restricted `junction`: Turn 1 in-transit `start-junction`, Turn 2 arrival `junction`)*.
 

@@ -20,6 +20,8 @@ class MapParser:
         if path is None:
             raise FileNotFoundError("Error File not found")
 
+        num = 0
+
         with open(path, "r") as file:
             end_hub_is_there: int = 0
             start_hub_is_there: int = 0
@@ -29,10 +31,21 @@ class MapParser:
 
             for num, line in enumerate(file, start=1):
 
+                if '#' in line:
+                    line = line.split('#', 1)[0]
+
                 cleanedline = line.strip('\n').strip(' ')
 
-                if not cleanedline or cleanedline.startswith('#'):
+                if not cleanedline:
                     continue
+
+                if ':' not in cleanedline:
+                    raise SyntaxError(
+                        f"Error in line {num}: missing ':' separator")
+
+                if cleanedline.count(':') > 1:
+                    raise SyntaxError(
+                        f"Error in line {num}: extra ':' separator")
 
                 key, value = cleanedline.split(':')
                 key = key.strip(' ')
@@ -45,12 +58,12 @@ class MapParser:
 
                     except ValueError:
                         raise ValueError(
-                            f"Error in line {num} nb_drones must"
+                            f"Error in line {num}: nb_drones must"
                             " be number")
 
                     if self.nb_drones <= 0:
                         raise PositiveNumber(
-                            f"Error in line {num} nb_drones must be greath"
+                            f"Error in line {num}: nb_drones must be greath"
                             " than from 0.")
                     number_drones += 1
 
@@ -64,12 +77,12 @@ class MapParser:
                             parts = main_part.split()
                             if len(parts) > 3:
                                 raise SyntaxError(
-                                    f"Error in line {num} extra data "
+                                    f"Error in line {num}: extra data "
                                     "must syntax must "
                                     "coordinates (expected name, x, y)")
                             elif len(parts) != 3:
                                 raise SyntaxError(
-                                    f"Error in line {num} missing "
+                                    f"Error in line {num}: missing "
                                     "coordinates (expected name, x, y)")
 
                             meta_data_part = value.strip(']').split('[')[
@@ -85,8 +98,8 @@ class MapParser:
 
                             if '-' in name:
                                 raise NameMapsParsingError(
-                                    f"Error in line {num} must not '-' in zone"
-                                    " word")
+                                    f"Error in line {num}: "
+                                    "must not '-' in zone word")
 
                             color: Optional[str] = None
                             zone: str = 'normal'
@@ -111,13 +124,13 @@ class MapParser:
                                                 item.split('=')[1].strip(' '))
                                         except ValueError:
                                             raise ValueError(
-                                                f"Error in line {num} "
+                                                f"Error in line {num}: "
                                                 "max_drones "
                                                 "must be number")
 
                                         if max_drones <= 0:
                                             raise PositiveNumber(
-                                                f"Error in line {num}"
+                                                f"Error in line {num}:"
                                                 "max_drones must "
                                                 "be greath than 0.")
                                         seen.add('max_drones')
@@ -128,7 +141,7 @@ class MapParser:
                                             zone = is_zone_there
                                         else:
                                             raise MetaDataError(
-                                                f"Error in line {num} "
+                                                f"Error in line {num}: "
                                                 "in meta data"
                                             )
                                         seen.add('zone')
@@ -137,20 +150,20 @@ class MapParser:
                                                    'max_drones'} and
                                       meta_key in seen):
                                     raise MetaDataError(
-                                        f"Error in line {num} in meta data "
+                                        f"Error in line {num}: in meta data "
                                         f"'{meta_key}' is there before"
                                     )
 
                                 else:
                                     raise MetaDataError(
-                                        f"Error in line {num} in meta data "
+                                        f"Error in line {num}: in meta data "
                                         f"{meta_key} is must be not here")
 
                             if name not in name_hubs:
                                 name_hubs.append(name)
                             else:
                                 raise DuplicateName(
-                                    f"Error in line {num} {name} must not"
+                                    f"Error in line {num}: {name} must not"
                                     " duplicate")
 
                             self.hubs.append(
@@ -168,7 +181,7 @@ class MapParser:
                             )
                         except ValueError:
                             raise ValueError(
-                                f"Error in line {num} x or y "
+                                f"Error in line {num}: x or y "
                                 "must be interger number")
 
                     elif '[' not in value and ']'not in value:
@@ -179,12 +192,12 @@ class MapParser:
                             if len(parts) > 3:
                                 garbage = " ".join(parts[3:])
                                 raise MetaDataError(
-                                    f"Error in line {num} extra data"
+                                    f"Error in line {num}: extra data"
                                     f" '{garbage}' is not allowed"
                                 )
                             elif len(parts) < 3:
                                 raise MetaDataError(
-                                    f"Error in line {num} missing "
+                                    f"Error in line {num}: missing "
                                     f"coordinates (expected name, x, y)"
                                 )
 
@@ -192,8 +205,8 @@ class MapParser:
 
                             if '-' in name:
                                 raise NameMapsParsingError(
-                                    f"Error in line {num} must not '-' in zone"
-                                    " word")
+                                    f"Error in line {num}: "
+                                    "must not '-' in zone word")
 
                             color = None
                             zone = 'normal'
@@ -308,6 +321,11 @@ class MapParser:
 
                         first, second = main_part.strip(' ').split('-')
 
+                        if first == second:
+                            raise MetaDataError(
+                                f"Error in line {num}: "
+                                " connection cannot link zone to itself")
+
                         if first not in name_hubs or second not in name_hubs:
                             raise ConnectNameNotFound(
                                 f"Error in line {num} this {first} not found"
@@ -352,6 +370,11 @@ class MapParser:
 
                         first, second = nodes
 
+                        if first == second:
+                            raise MetaDataError(
+                                f"Error in line {num}: "
+                                " connection cannot link zone to itself")
+
                         if first not in name_hubs or second not in name_hubs:
                             raise ConnectNameNotFound(
                                 f"Error in line {num} this {first} not found"
@@ -383,6 +406,9 @@ class MapParser:
                             f"Error in line {num} in meta data "
                             f" syntax must be [max_capacity=x]"
                         )
+                else:
+                    raise SyntaxError(
+                        f"Error in line {num}: unknown directive '{key}'")
 
                 if self.nb_drones == 0:
                     raise StartByNmDrone(
@@ -408,10 +434,10 @@ class MapParser:
                     raise DuplicateName(
                         f"Error in line {num} start_hubs must not duplicate")
 
-            if end_hub_is_there == 0:
-                raise StartOrEndNotFound(
-                    f"Error in line {num} end_hubs not found")
-
             if start_hub_is_there == 0:
                 raise StartOrEndNotFound(
                     f"Error in line {num} start_hubs not found")
+
+            if end_hub_is_there == 0:
+                raise StartOrEndNotFound(
+                    f"Error in line {num} end_hubs not found")

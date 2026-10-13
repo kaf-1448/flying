@@ -40,7 +40,13 @@ class Simulation:
         while any(not d.is_finished for d in self.drones):
 
             moves: List[str] = []
-            occupied: List[str] = []
+            occupied: List[str] = [
+                d.path[d.position] for d in self.drones if (not d.is_finished
+                                                            and d.path[
+                                                                d.position] !=
+                                                            graph.start_node)
+            ]
+
             edge_used: List[Tuple[str, str]] = []
             current_state: List[Dict[str, Any]] = []
 
@@ -57,11 +63,18 @@ class Simulation:
                     if next_hub else None
                 )
 
+                edge_count: int = 0
+                if next_hub is not None:
+                    edge_count = (
+                        edge_used.count((current_hub, next_hub))
+                        + edge_used.count((next_hub, current_hub))
+                    )
+
                 if not d.is_finished:
 
                     if d.wait > 0:
                         d.wait -= 1
-                        occupied.append(current_hub)
+                        # occupied.append(current_hub)
                         moves.append(
                             f"D{d.id}-{current_hub}"
                         )
@@ -72,23 +85,29 @@ class Simulation:
                         })
                         continue
 
-                    if next_hub == graph.end_node:
-                        d.position += 1
-                        moves.append(
-                            f"D{d.id}-{d.path[d.position]}"
-                        )
+                    if next_hub == graph.end_node and edge is not None:
+                        if edge_count < graph.capacities.get(edge,
+                                                             1):
+                            d.position += 1
+                            if current_hub in occupied:
+                                occupied.remove(current_hub)
+                            edge_used.append(edge)
+                            moves.append(
+                                f"D{d.id}-{d.path[d.position]}"
+                            )
 
                     elif (
                             next_hub is not None and edge is not None
                             and occupied.count(
                                 next_hub) < graph.nodes[next_hub].max_drones
-                            and edge_used.count(
-                                edge) < graph.capacities.get(edge, 1)
+                            and edge_count < graph.capacities.get(edge, 1)
                             and d.wait == 0):
 
                         if graph.nodes[next_hub].type == 'restricted':
                             d.wait += 1
                             occupied.append(next_hub)
+                            if current_hub in occupied:
+                                occupied.remove(current_hub)
                             edge_used.append(edge)
                             moves.append(f"D{d.id}-{current_hub}-{next_hub}")
 
@@ -105,6 +124,8 @@ class Simulation:
                         else:
                             d.position += 1
                             occupied.append(next_hub)
+                            if current_hub in occupied:
+                                occupied.remove(current_hub)
                             edge_used.append(edge)
                             moves.append(
                                 f"D{d.id}-{d.path[d.position]}"
@@ -130,6 +151,6 @@ class Simulation:
             self.turns_history.append(current_state)
 
             if moves:
-                print(f"Turn {self.turn}: {' '.join(line for line in moves)}")
+                print(f"{' '.join(line for line in moves)}")
 
             self.turn += 1

@@ -1,9 +1,10 @@
-import sys
-from parser import map_parser
-from simulation.graph import Graph
-from simulation.pathfinder import PathFinder
-from simulation.simulation import Drone, Simulation
 from simulation.visualizer import Visualizer
+from simulation.simulation import Drone, Simulation
+from simulation.pathfinder import PathFinder
+from simulation.graph import Graph
+from parser import map_parser
+import pygame
+import sys
 
 
 def main() -> None:
@@ -34,13 +35,16 @@ def main() -> None:
 
         simu = Simulation(Drone, parser.nb_drones, paths)
         history = simu.turns_history
-
         simu.start_simulation(graph)
-        vis = Visualizer(graph, parser, history)
-        vis.run()
+        try:
+            vis = Visualizer(graph, parser, history)
+            vis.run()
+        except pygame.error as e:
+            print(f"[Notice] Graphical visualizer skipped: {e}")
 
     except Exception as e:
         print(e)
+        sys.exit(1)
 
 
 if __name__ == "__main__":
