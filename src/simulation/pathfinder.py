@@ -63,36 +63,44 @@ class PathFinder:
         end: str
     ) -> Optional[Tuple[float, List[str]]]:
 
-        pq: List[Tuple[float, str, List[str]]] = []
+        pq: List[Tuple[float, int,  str, List[str]]] = []
         distance: Dict[str, float] = {start: 0.0}
-        heapq.heappush(pq, (0.0, start, [start]))
+        heapq.heappush(pq, (0.0, 0, start, [start]))
+
+        if (graph.nodes[start].type == "blocked"
+                or graph.nodes[end].type == "blocked"):
+            return None
 
         while pq:
-            cost, node, path = heapq.heappop(pq)
+            cost, neg_prio, node, path = heapq.heappop(pq)
 
             if node == end:
                 return cost, path
 
             for neighbor in graph.adj.get(node, []):
                 weight: float = 1.0
+                pre_gain: int = 0
 
                 if graph.nodes[neighbor].type == "priority":
-                    weight = 0.9
+                    weight = 1
+                    pre_gain = 1
 
                 elif graph.nodes[neighbor].type == "restricted":
                     weight = 2.0
 
                 elif graph.nodes[neighbor].type == "blocked":
-                    continue
+                    weight = float('inf')
 
                 new_cost = cost + weight
+                new_prio = neg_prio - pre_gain
 
                 if neighbor not in path:
 
                     if new_cost < distance.get(neighbor, float('inf')):
                         distance[neighbor] = new_cost
                         heapq.heappush(
-                            pq, (new_cost, neighbor, path + [neighbor]))
+                            pq, (new_cost, new_prio, neighbor, path +
+                                 [neighbor]))
 
         return None
 
@@ -104,6 +112,8 @@ class PathFinder:
                 cost += 2.0
             elif graph.nodes[node].type == "priority":
                 cost += 0.9
+            elif graph.nodes[node].type == "blocked":
+                cost += float('inf')
             else:
                 cost += 1.0
         return cost
@@ -134,6 +144,9 @@ class PathFinder:
                 root_path = p[:i + 1]
 
                 for neighbor in graph.adj.get(spur_node, []):
+
+                    if graph.nodes[neighbor].type == "blocked":
+                        continue
 
                     if neighbor not in root_path and neighbor not in p[:i + 2]:
 

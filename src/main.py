@@ -42,6 +42,9 @@ def main() -> None:
         except pygame.error as e:
             print(f"[Notice] Graphical visualizer skipped: {e}")
 
+    except KeyboardInterrupt:
+        sys.exit(0)
+
     except Exception as e:
         print(e)
         sys.exit(1)

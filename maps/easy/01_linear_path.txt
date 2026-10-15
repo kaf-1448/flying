@@ -7,7 +7,7 @@
 nb_drones:                      10
 
 
-start_hub: start 0 0 [color=green zone=normal max_drones=1]
+start_hub: start 0 0 [color=green zone=normal  max_drones=]
 
 
 
@@ -20,5 +20,5 @@ end_hub: goal 3 0
 
 
 connection: start-waypoint1 
-connection: waypoint1-waypoint2 [max_capacity=1]
+connection: waypoint1-waypoint2  [max_capacity=1]
 connection: waypoint2-goal

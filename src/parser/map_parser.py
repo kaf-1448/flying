@@ -71,6 +71,15 @@ class MapParser:
 
                     if '[' in value and ']' in value:
 
+                        if value.count('[') != 1 or value.count(']') != 1:
+                            raise MetaDataError(
+                                f"Error in line {num}: "
+                                f"invalid metadata brackets")
+
+                        if not value.strip().endswith(']'):
+                            raise SyntaxError(
+                                f"Error in line {num}: extra data after ']'")
+
                         try:
 
                             main_part = value.split('[')[0]
@@ -94,7 +103,14 @@ class MapParser:
                             #         f"is extra data must syntax"
                             #         f"as (name x y [meta data])")
 
-                            name, x, y = main_part.strip(' ').split()
+                            name, x_str, y_str = parts[0], parts[1], parts[2]
+
+                            try:
+                                x = int(x_str)
+                                y = int(y_str)
+                            except ValueError:
+                                raise ValueError(
+                                    f"Error in line {num}: x or y must be integer number")
 
                             if '-' in name:
                                 raise NameMapsParsingError(
@@ -106,9 +122,16 @@ class MapParser:
                             max_drones: int = 1
 
                             seen = set()
+
                             for item in meta_data_part.split():
 
                                 meta_key = item.split('=')[0]
+                                if '=' not in item or item.count('=') != 1:
+                                    raise MetaDataError(
+                                        f"Error in line {num}: "
+                                        f"invalid metadata item '{item}',"
+                                        f" missing or extra '='"
+                                    )
 
                                 if (meta_key in {'color', 'zone', 'max_drones'}
                                         and meta_key not in seen):
@@ -142,8 +165,13 @@ class MapParser:
                                         else:
                                             raise MetaDataError(
                                                 f"Error in line {num}: "
-                                                "in meta data"
+                                                f"invalid zone type "
+                                                f"'{is_zone_there}', "
+                                                f"must be one of: "
+                                                f"{', '.join(sorted(
+                                                    ALLOWED_ZONES))}"
                                             )
+
                                         seen.add('zone')
                                 elif (meta_key in {'color',
                                                    'zone',
@@ -170,8 +198,8 @@ class MapParser:
                                 {
                                     'type': key,
                                     'name': name,
-                                    'x': int(x),
-                                    'y': int(y),
+                                    'x': x,
+                                    'y': y,
                                     'meta_data': {
                                         'zone': zone,
                                         'color': color,
@@ -245,6 +273,15 @@ class MapParser:
                 elif key == "connection":
 
                     if '[' in value and ']' in value:
+
+                        if value.count('[') != 1 or value.count(']') != 1:
+                            raise MetaDataError(
+                                f"Error in line {num}: "
+                                f"invalid metadata brackets")
+
+                        if not value.strip().endswith(']'):
+                            raise SyntaxError(
+                                f"Error in line {num}: extra data after ']'")
 
                         main_part = value.strip(' ').split('[')[0]
 
