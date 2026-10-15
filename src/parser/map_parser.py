@@ -34,7 +34,7 @@ class MapParser:
                 if '#' in line:
                     line = line.split('#', 1)[0]
 
-                cleanedline = line.strip('\n').strip(' ')
+                cleanedline = line.strip()
 
                 if not cleanedline:
                     continue
@@ -48,8 +48,8 @@ class MapParser:
                         f"Error in line {num}: extra ':' separator")
 
                 key, value = cleanedline.split(':')
-                key = key.strip(' ')
-                value = value.strip(' ')
+                key = key.strip()
+                value = value.strip()
 
                 if key == "nb_drones":
 
@@ -80,137 +80,143 @@ class MapParser:
                             raise SyntaxError(
                                 f"Error in line {num}: extra data after ']'")
 
+                        main_part = value.split('[')[0]
+                        parts = main_part.split()
+                        if len(parts) > 3:
+                            raise SyntaxError(
+                                f"Error in line {num}: extra data "
+                                "must syntax must "
+                                "coordinates (expected name, x, y)")
+                        elif len(parts) != 3:
+                            raise SyntaxError(
+                                f"Error in line {num}: missing "
+                                "coordinates (expected name, x, y)")
+
+                        meta_data_part = value.strip(']').split('[')[
+                            1]
+
+                        if len(meta_data_part.strip()) == 0:
+                            raise MetaDataError(
+                                f"Error in line {num}:"
+                                f"in meta data must be not Empty between []")
+
+                        # if (len(meta_data_part.split()) > 1):
+                        #     raise SyntaxError(
+                        #         f"Error line in {num}"
+                        #         f"is extra data must syntax"
+                        #         f"as (name x y [meta data])")
+
+                        name, x_str, y_str = parts[0], parts[1], parts[2]
+
                         try:
-
-                            main_part = value.split('[')[0]
-                            parts = main_part.split()
-                            if len(parts) > 3:
-                                raise SyntaxError(
-                                    f"Error in line {num}: extra data "
-                                    "must syntax must "
-                                    "coordinates (expected name, x, y)")
-                            elif len(parts) != 3:
-                                raise SyntaxError(
-                                    f"Error in line {num}: missing "
-                                    "coordinates (expected name, x, y)")
-
-                            meta_data_part = value.strip(']').split('[')[
-                                1]
-
-                            # if (len(meta_data_part.split()) > 1):
-                            #     raise SyntaxError(
-                            #         f"Error line in {num}"
-                            #         f"is extra data must syntax"
-                            #         f"as (name x y [meta data])")
-
-                            name, x_str, y_str = parts[0], parts[1], parts[2]
-
-                            try:
-                                x = int(x_str)
-                                y = int(y_str)
-                            except ValueError:
-                                raise ValueError(
-                                    f"Error in line {num}: x or y must be integer number")
-
-                            if '-' in name:
-                                raise NameMapsParsingError(
-                                    f"Error in line {num}: "
-                                    "must not '-' in zone word")
-
-                            color: Optional[str] = None
-                            zone: str = 'normal'
-                            max_drones: int = 1
-
-                            seen = set()
-
-                            for item in meta_data_part.split():
-
-                                meta_key = item.split('=')[0]
-                                if '=' not in item or item.count('=') != 1:
-                                    raise MetaDataError(
-                                        f"Error in line {num}: "
-                                        f"invalid metadata item '{item}',"
-                                        f" missing or extra '='"
-                                    )
-
-                                if (meta_key in {'color', 'zone', 'max_drones'}
-                                        and meta_key not in seen):
-
-                                    if 'color' in item:
-                                        seen.add('color')
-                                        color = item.split('=')[1]
-
-                                    if "max_drones" in item:
-
-                                        try:
-                                            max_drones = int(
-                                                item.split('=')[1].strip(' '))
-                                        except ValueError:
-                                            raise ValueError(
-                                                f"Error in line {num}: "
-                                                "max_drones "
-                                                "must be number")
-
-                                        if max_drones <= 0:
-                                            raise PositiveNumber(
-                                                f"Error in line {num}:"
-                                                "max_drones must "
-                                                "be greath than 0.")
-                                        seen.add('max_drones')
-
-                                    if 'zone' in item:
-                                        is_zone_there = item.split('=')[1]
-                                        if is_zone_there in ALLOWED_ZONES:
-                                            zone = is_zone_there
-                                        else:
-                                            raise MetaDataError(
-                                                f"Error in line {num}: "
-                                                f"invalid zone type "
-                                                f"'{is_zone_there}', "
-                                                f"must be one of: "
-                                                f"{', '.join(sorted(
-                                                    ALLOWED_ZONES))}"
-                                            )
-
-                                        seen.add('zone')
-                                elif (meta_key in {'color',
-                                                   'zone',
-                                                   'max_drones'} and
-                                      meta_key in seen):
-                                    raise MetaDataError(
-                                        f"Error in line {num}: in meta data "
-                                        f"'{meta_key}' is there before"
-                                    )
-
-                                else:
-                                    raise MetaDataError(
-                                        f"Error in line {num}: in meta data "
-                                        f"{meta_key} is must be not here")
-
-                            if name not in name_hubs:
-                                name_hubs.append(name)
-                            else:
-                                raise DuplicateName(
-                                    f"Error in line {num}: {name} must not"
-                                    " duplicate")
-
-                            self.hubs.append(
-                                {
-                                    'type': key,
-                                    'name': name,
-                                    'x': x,
-                                    'y': y,
-                                    'meta_data': {
-                                        'zone': zone,
-                                        'color': color,
-                                        'max_drones': max_drones
-                                    }
-                                }
-                            )
+                            x = int(x_str)
+                            y = int(y_str)
                         except ValueError:
                             raise ValueError(
-                                f"Error in line {num}: x or y "
-                                "must be interger number")
+                                f"Error in line {num}: "
+                                f"x or y must be integer number")
+
+                        if '-' in name:
+                            raise NameMapsParsingError(
+                                f"Error in line {num}: "
+                                "must not '-' in zone word")
+
+                        color: Optional[str] = None
+                        zone: str = 'normal'
+                        max_drones: int = 1
+
+                        seen = set()
+
+                        for item in meta_data_part.split():
+
+                            meta_key = item.split('=')[0]
+                            if '=' not in item or item.count('=') != 1:
+                                raise MetaDataError(
+                                    f"Error in line {num}: "
+                                    f"invalid metadata item '{item}',"
+                                    f" missing or extra '='"
+                                )
+
+                            if (meta_key in {'color', 'zone', 'max_drones'}
+                                    and meta_key not in seen):
+
+                                if 'color' in item:
+                                    seen.add('color')
+                                    color = item.split(
+                                        '=')[1].strip().strip("'\"")
+                                    if not color:
+                                        raise MetaDataError(
+                                            f"Error in line {num}: "
+                                            f"color must be string"
+                                        )
+
+                                if "max_drones" in item:
+
+                                    try:
+                                        max_drones = int(
+                                            item.split('=')[1].strip(' '))
+                                    except ValueError:
+                                        raise ValueError(
+                                            f"Error in line {num}: "
+                                            "max_drones "
+                                            "must be number")
+
+                                    if max_drones <= 0:
+                                        raise PositiveNumber(
+                                            f"Error in line {num}:"
+                                            "max_drones must "
+                                            "be greath than 0.")
+                                    seen.add('max_drones')
+
+                                if 'zone' in item:
+                                    is_zone_there = item.split('=')[1]
+                                    if is_zone_there in ALLOWED_ZONES:
+                                        zone = is_zone_there
+                                    else:
+                                        raise MetaDataError(
+                                            f"Error in line {num}: "
+                                            "invalid zone type "
+                                            f"'{is_zone_there}', "
+                                            "must be one of: "
+                                            f"{', '.join(sorted(
+                                                ALLOWED_ZONES))}"
+                                        )
+
+                                    seen.add('zone')
+                            elif (meta_key in {'color',
+                                               'zone',
+                                               'max_drones'} and
+                                    meta_key in seen):
+                                raise MetaDataError(
+                                    f"Error in line {num}: in meta data "
+                                    f"'{meta_key}' is there before"
+                                )
+
+                            else:
+                                raise MetaDataError(
+                                    f"Error in line {num}: in meta data "
+                                    f"{meta_key} is must be not here")
+
+                        if name not in name_hubs:
+                            name_hubs.append(name)
+                        else:
+                            raise DuplicateName(
+                                f"Error in line {num}: {name} must not"
+                                " duplicate")
+
+                        self.hubs.append(
+                            {
+                                'type': key,
+                                'name': name,
+                                'x': x,
+                                'y': y,
+                                'meta_data': {
+                                    'zone': zone,
+                                    'color': color,
+                                    'max_drones': max_drones
+                                }
+                            }
+                        )
 
                     elif '[' not in value and ']'not in value:
                         try:
@@ -229,7 +235,7 @@ class MapParser:
                                     f"coordinates (expected name, x, y)"
                                 )
 
-                            name, x, y = parts[0], parts[1], parts[2]
+                            name, str_x, str_y = parts[0], parts[1], parts[2]
 
                             if '-' in name:
                                 raise NameMapsParsingError(
@@ -251,8 +257,8 @@ class MapParser:
                                 {
                                     'type': key,
                                     'name': name,
-                                    'x': int(x),
-                                    'y': int(y),
+                                    'x': int(str_x),
+                                    'y': int(str_y),
                                     'meta_data': {
                                         'zone': zone,
                                         'color': color,
