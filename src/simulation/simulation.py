@@ -20,9 +20,11 @@ class Drone:
 class Simulation:
     def __init__(
             self,
+            assigned_path: list[list[str]],
             drone: Type[Drone],
             nb_drones: int,
             paths: List[List[str]]) -> None:
+        self.assigned_path: List[List[str]] = assigned_path
         self.drones: List[Drone] = (
             [drone(i + 1, paths[i % len(paths)], 0, False)
              for i in range(nb_drones)])

@@ -25,17 +25,35 @@ def main() -> None:
         if graph.start_node is None or graph.end_node is None:
             raise ValueError("Start or End hub not found in graph")
 
-        path_f = PathFinder()
+        path_f = PathFinder(parser.nb_drones)
 
         p = path_f.dijkstra(graph, graph.start_node, graph.end_node)
         if p is None:
             raise ValueError("No path found between start and end hubs")
 
-        paths = path_f.yen_algorithm(graph, 2, p, graph.end_node)
+        k = 2
 
-        simu = Simulation(Drone, parser.nb_drones, paths)
+        paths = path_f.yen_algorithm(graph, k, p, graph.end_node)
+
+        n0, n1 = path_f.brute_force(graph)
+
+        if len(paths) == 1:
+            assigned_path = [paths[0]] * parser.nb_drones
+        else:
+            assigned_path = []
+            c0, c1 = 0, 0
+            while len(assigned_path) < parser.nb_drones:
+                if c0 < n0:
+                    assigned_path.append(paths[0])
+                    c0 += 1
+                if c1 < n1:
+                    assigned_path.append(paths[1])
+                    c1 += 1
+
+        simu = Simulation(assigned_path, Drone, parser.nb_drones, paths)
         history = simu.turns_history
         simu.start_simulation(graph)
+
         try:
             vis = Visualizer(graph, parser, history)
             vis.run()

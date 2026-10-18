@@ -5,6 +5,9 @@ import heapq
 
 
 class PathFinder:
+    def __init__(self, nb_drones: int):
+        self.nb_drones = nb_drones
+
     def bfs(self, graph: Graph) -> Optional[List[str]]:
 
         start = graph.start_node
@@ -111,7 +114,7 @@ class PathFinder:
             if graph.nodes[node].type == "restricted":
                 cost += 2.0
             elif graph.nodes[node].type == "priority":
-                cost += 0.9
+                cost += 1.0
             elif graph.nodes[node].type == "blocked":
                 cost += float('inf')
             else:
@@ -174,3 +177,38 @@ class PathFinder:
                 i += 1
 
         return paths
+
+    def brute_force(self, graph: Graph):
+
+        if not graph.start_node or not graph.end_node:
+            return None
+
+        best_max = float('inf')
+        best_distribution: Optional[Tuple[int, int]] = None
+
+        short_path = self.dijkstra(graph,
+                                   graph.start_node, graph.end_node)
+        if short_path is None:
+            return None
+
+        paths = self.yen_algorithm(graph, 2, short_path, graph.end_node)
+        if len(paths) <= 1:
+            return (self.nb_drones, 0)
+
+        cost0 = int(self.cost(graph, paths[0]))
+        cost1 = int(self.cost(graph, paths[1]))
+
+        for n0 in range(self.nb_drones + 1):
+
+            n1 = self.nb_drones - n0
+
+            t0 = cost0 + n0 - 1 if n0 else 0
+            t1 = cost1 + n1 - 1 if n1 else 0
+
+            maximum = max(t0, t1)
+
+            if maximum <= best_max:
+                best_max = maximum
+                best_distribution = (n0, n1)
+
+        return best_distribution
