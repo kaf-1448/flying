@@ -178,7 +178,7 @@ class PathFinder:
 
         return paths
 
-    def brute_force(self, graph: Graph):
+    def brute_force(self, graph: Graph) -> Optional[Tuple[int, int]]:
 
         if not graph.start_node or not graph.end_node:
             return None
@@ -194,6 +194,12 @@ class PathFinder:
         paths = self.yen_algorithm(graph, 2, short_path, graph.end_node)
         if len(paths) <= 1:
             return (self.nb_drones, 0)
+
+        # فكرة الفحص:
+        shared_nodes = set(paths[0][1:-1]) & set(paths[1][1:-1])
+        for node in shared_nodes:
+            if graph.nodes[node].max_drones == 1:
+                return (self.nb_drones, 0)
 
         cost0 = int(self.cost(graph, paths[0]))
         cost1 = int(self.cost(graph, paths[1]))

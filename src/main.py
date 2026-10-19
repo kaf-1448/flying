@@ -35,8 +35,8 @@ def main() -> None:
 
         paths = path_f.yen_algorithm(graph, k, p, graph.end_node)
 
-        n0, n1 = path_f.brute_force(graph)
-
+        distrib = path_f.brute_force(graph)
+        n0, n1 = distrib if distrib is not None else (parser.nb_drones, 0)
         if len(paths) == 1:
             assigned_path = [paths[0]] * parser.nb_drones
         else:

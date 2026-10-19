@@ -10,6 +10,9 @@ install:
 run:
 	python3 src/main.py $(MAP)
 
+debug:
+	python3 -m pdb src/main.py $(MAP)
+
 lint:
 	flake8 src/
 	mypy src/ --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
