@@ -3,7 +3,7 @@ from .exceptions import DuplicateName, NameMapsParsingError
 from .exceptions import ConnectNameNotFound, StartByNmDrone
 from .exceptions import StartOrEndNotFound, PositiveNumber
 from .exceptions import DuplicateConnectionError, MetaDataError
-from .exceptions import SyntaxError
+from .exceptions import SyntaxError, CoordinatesError
 
 
 ALLOWED_ZONES: Set[str] = {"normal", "blocked", "restricted", "priority"}
@@ -21,6 +21,7 @@ class MapParser:
             raise FileNotFoundError("Error File not found")
 
         num = 0
+        coordinate_check = set()
 
         with open(path, "r") as file:
             end_hub_is_there: int = 0
@@ -111,15 +112,27 @@ class MapParser:
                         try:
                             x = int(x_str)
                             y = int(y_str)
+
                         except ValueError:
                             raise ValueError(
                                 f"Error in line {num}: "
-                                f"x or y must be integer number")
+                                "x or y must be integer number")
 
                         if '-' in name:
                             raise NameMapsParsingError(
                                 f"Error in line {num}: "
                                 "must not '-' in zone word")
+
+                        coords = (int(x), int(y))
+
+                        if coords in coordinate_check:
+                            raise CoordinatesError(
+                                f"Error in line {num}: "
+                                "duplicate coordinates "
+                                f"({coords[0]}, {coords[1]}) already used"
+                            )
+
+                        coordinate_check.add(coords)
 
                         color: Optional[str] = None
                         zone: str = 'normal'
@@ -252,6 +265,17 @@ class MapParser:
                                 raise DuplicateName(
                                     f"Error in line {num} {name} must not"
                                     " duplicate")
+
+                            coords = (int(str_x), int(str_y))
+
+                            if coords in coordinate_check:
+                                raise CoordinatesError(
+                                    f"Error in line {num}: "
+                                    "duplicate coordinates "
+                                    f"({coords[0]}, {coords[1]}) already used"
+                                )
+
+                            coordinate_check.add(coords)
 
                             self.hubs.append(
                                 {

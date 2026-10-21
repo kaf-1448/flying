@@ -6,9 +6,6 @@ hub: A 2 0 [color=green max_drones=2]
 hub: R 3 0 [color=green zone=restricted max_drones=2]
 end_hub: goal 5 0 [color=red]
 
-connection: S-A [max_link_capacity= 2 ]
+connection: S-A [max_link_capacity=2]
 connection: A-R [max_link_capacity=1]
 connection: R-goal
-
-""
-

@@ -36,3 +36,7 @@ class MetaDataError(Exception):
 
 class SyntaxError(Exception):
     pass
+
+
+class CoordinatesError(Exception):
+    pass
