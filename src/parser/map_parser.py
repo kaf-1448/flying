@@ -63,8 +63,8 @@ class MapParser:
 
                     if self.nb_drones <= 0:
                         raise PositiveNumber(
-                            f"Error in line {num}: nb_drones must be greath"
-                            " than from 0.")
+                            f"Error in line {num}: nb_drones must be "
+                            "a positive integer greater than 0")
                     number_drones += 1
 
                 elif key in ("start_hub", "hub", "end_hub"):
@@ -84,9 +84,9 @@ class MapParser:
                         parts = main_part.split()
                         if len(parts) > 3:
                             raise SyntaxError(
-                                f"Error in line {num}: extra data "
-                                "must syntax must "
-                                "coordinates (expected name, x, y)")
+                                f"Error in line {num}: "
+                                "unexpected extra data before metadata"
+                                " (expected name x y)")
                         elif len(parts) != 3:
                             raise SyntaxError(
                                 f"Error in line {num}: missing "
@@ -194,15 +194,15 @@ class MapParser:
 
                             else:
                                 raise MetaDataError(
-                                    f"Error in line {num}: in meta data "
-                                    f"{meta_key} is must be not here")
+                                    f"Error in line {num}: "
+                                    f"unknown metadata key '{meta_key}'")
 
                         if name not in name_hubs:
                             name_hubs.append(name)
                         else:
                             raise DuplicateName(
-                                f"Error in line {num}: {name} must not"
-                                " duplicate")
+                                f"Error in line {num}: "
+                                f"duplicate zone name '{name}'")
 
                         self.hubs.append(
                             {
@@ -326,10 +326,10 @@ class MapParser:
                                 "must be not Empty between []")
 
                         elif len(conn_meta) != 1:
-                            raise SyntaxError(
-                                f"Error in line {num} extra data "
-                                "must syntax must "
-                                "coordinates (node1-node2 [meta data])")
+                            raise MetaDataError(
+                                f"Error in line {num}: "
+                                "invalid connection metadata syntax "
+                                "(expected single 'key=value')")
 
                         else:
 
@@ -380,8 +380,9 @@ class MapParser:
 
                         if edge in seen_connection:
                             raise DuplicateConnectionError(
-                                f"Error in line {num} connection is there"
-                                " before")
+                                f"Error in line {num}: "
+                                f" duplicate connection between"
+                                f" '{first}' and '{second}'")
 
                         seen_connection.add(edge)
 
@@ -419,17 +420,20 @@ class MapParser:
                                 " connection cannot link zone to itself")
 
                         if first not in name_hubs or second not in name_hubs:
+                            missing = (first if first not in name_hubs else
+                                       second)
                             raise ConnectNameNotFound(
-                                f"Error in line {num} this {first} not found"
-                                " as zone")
+                                f"Error in line {num}: "
+                                f"unknown zone '{missing}' in connection")
 
                         sorted_nodes = sorted([first, second])
                         edge = (sorted_nodes[0], sorted_nodes[1])
 
                         if edge in seen_connection:
                             raise DuplicateConnectionError(
-                                f"Error in line {num} connection is there "
-                                "before")
+                                f"Error in line {num}: "
+                                f" duplicate connection between"
+                                f" '{first}' and '{second}'")
 
                         seen_connection.add(edge)
 
@@ -455,13 +459,13 @@ class MapParser:
 
                 if self.nb_drones == 0:
                     raise StartByNmDrone(
-                        f"Error in line {num} the number of Drones must be"
-                        " in the firt file")
+                        f"Error in line {num}:"
+                        " 'nb_drones' must be specified on the first line")
 
                 elif number_drones != 1:
                     raise DuplicateName(
-                        f"Error in line {num} the number of Drones must be"
-                        " not duplicat")
+                        f"Error in line {num}: "
+                        "duplicate 'nb_drones' directive")
 
             for hub_dict in self.hubs:
                 if hub_dict['type'] == "start_hub":
