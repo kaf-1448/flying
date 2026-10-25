@@ -1,4 +1,6 @@
 class Zone:
+    """Airspace zone node representing a hub."""
+
     def __init__(self,
                  name: str,
                  x: int,
@@ -6,6 +8,7 @@ class Zone:
                  type_z: str,
                  color: str,
                  max_drones: int):
+        """Initialize zone attributes and capacity limits."""
         self.name = name
         self.x = x
         self.y = y

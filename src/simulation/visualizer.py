@@ -5,6 +5,8 @@ from parser.map_parser import MapParser
 
 
 class Visualizer:
+    """Pygame visualizer for animated drone flight simulation."""
+
     def __init__(
         self,
         graph: Graph,
@@ -14,6 +16,7 @@ class Visualizer:
         height: int = 800,
         margin: int = 60
     ) -> None:
+        """Initialize visualizer settings, dimensions, and node positions."""
         self.graph = graph
         self.parser = parser
         self.history = history
@@ -27,6 +30,7 @@ class Visualizer:
         self._init_position_nodes()
 
     def _get_node_color(self, zone: Any) -> Any:
+        """Determine RGB color of a zone based on role or type."""
         if zone.name == self.graph.start_node:
             return (46, 204, 113)
         if zone.name == self.graph.end_node:
@@ -52,6 +56,7 @@ class Visualizer:
         min_x: int, max_x: int,
         min_y: int, max_y: int
     ) -> Tuple[int, int]:
+        """Convert map coordinates to screen pixel coordinates."""
         ratio_x = (x - min_x) / (max_x - min_x) if max_x != min_x else 0.5
         ratio_y = (y - min_y) / (max_y - min_y) if max_y != min_y else 0.5
 
@@ -60,6 +65,7 @@ class Visualizer:
         return (pixel_x, pixel_y)
 
     def _init_position_nodes(self) -> None:
+        """Precompute screen positions and colors for all map zones."""
         value_x = [node.x for node in self.graph.nodes.values()]
         value_y = [node.y for node in self.graph.nodes.values()]
 
@@ -76,6 +82,7 @@ class Visualizer:
             }
 
     def _draw_connections(self, screen: pygame.Surface) -> None:
+        """Draw connection links between adjacent zones."""
         for cont in self.parser.connections:
             ps1 = self.position_nodes[cont['from']]['ps']
             ps2 = self.position_nodes[cont['to']]['ps']
@@ -84,7 +91,7 @@ class Visualizer:
     def _draw_zones(self,
                     screen: pygame.Surface,
                     font: pygame.font.Font) -> None:
-
+        """Draw zone circles and names on the screen."""
         for zone_name, data in self.position_nodes.items():
             ps = data['ps']
             pygame.draw.circle(screen, data['color'], ps, 25)
@@ -95,6 +102,7 @@ class Visualizer:
     def _draw_drones(self,
                      screen: pygame.Surface,
                      font: pygame.font.Font) -> None:
+        """Draw drones at their current zone or link positions."""
         for drone in self.history[self.current_turn]:
             zone_str = drone['zone']
 
@@ -127,6 +135,7 @@ class Visualizer:
     def _draw_hud(self,
                   screen: pygame.Surface,
                   font: pygame.font.Font) -> None:
+        """Draw turn counter and control instructions overlay."""
         hud_text = font.render(
             f"Turn: {self.current_turn} / {self.max_turns}\
                   |  [SPACE]: Next  |  [LEFT]: Prev  |  [R]: Reset",
@@ -135,6 +144,7 @@ class Visualizer:
         screen.blit(hud_text, (20, 20))
 
     def run(self) -> None:
+        """Run the interactive Pygame visualization window loop."""
         pygame.init()
         screen = pygame.display.set_mode((self.width, self.height))
         pygame.display.set_caption("Fly-in Drone Visualizer")

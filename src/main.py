@@ -8,6 +8,7 @@ import sys
 
 
 def main() -> None:
+    """Parse map, solve routing paths, and run drone simulation."""
     try:
 
         if len(sys.argv) < 2:
@@ -37,6 +38,7 @@ def main() -> None:
 
         distrib = path_f.brute_force(graph)
         n0, n1 = distrib if distrib is not None else (parser.nb_drones, 0)
+
         if len(paths) == 1:
             assigned_path = [paths[0]] * parser.nb_drones
         else:
@@ -64,7 +66,7 @@ def main() -> None:
         sys.exit(0)
 
     except Exception as e:
-        print(e)
+        print(F"Error: {e}")
         sys.exit(1)
 
 

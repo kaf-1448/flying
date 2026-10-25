@@ -4,7 +4,10 @@ from parser.map_parser import MapParser
 
 
 class Graph:
+    """Network graph representing zones and flight links."""
+
     def __init__(self) -> None:
+        """Initialize empty graph nodes, adjacency lists, and capacities."""
         self.nodes: Dict[str, Zone] = {}
         self.adj: Dict[str, List[str]] = {}
         self.start_node: Optional[str] = None
@@ -12,6 +15,7 @@ class Graph:
         self.capacities: Dict[Tuple[str, str], int] = {}
 
     def init_zones(self, parser: MapParser) -> None:
+        """Initialize zone nodes and identify start and end hubs."""
         for hub in parser.hubs:
             self.adj[hub['name']] = []
 
@@ -31,6 +35,7 @@ class Graph:
             )
 
     def build_adjacent_list(self, parser: MapParser) -> None:
+        """Build adjacency list and edge capacities from parser data."""
         for conct in parser.connections:
             u: str = conct['from']
             v: str = conct['to']

@@ -10,12 +10,16 @@ ALLOWED_ZONES: Set[str] = {"normal", "blocked", "restricted", "priority"}
 
 
 class MapParser:
+    """Parse and validate map file syntax, zones, and connections."""
+
     def __init__(self) -> None:
+        """Initialize empty map configuration containers."""
         self.nb_drones: int = 0
         self.hubs: List[Dict[str, Any]] = []
         self.connections: List[Dict[str, Any]] = []
 
     def read_file(self, path: str) -> None:
+        """Read and validate the map file, loading hubs and connections."""
 
         if path is None:
             raise FileNotFoundError("Error File not found")
@@ -100,12 +104,6 @@ class MapParser:
                             raise MetaDataError(
                                 f"Error in line {num}:"
                                 f"in meta data must be not Empty between []")
-
-                        # if (len(meta_data_part.split()) > 1):
-                        #     raise SyntaxError(
-                        #         f"Error line in {num}"
-                        #         f"is extra data must syntax"
-                        #         f"as (name x y [meta data])")
 
                         name, x_str, y_str = parts[0], parts[1], parts[2]
 

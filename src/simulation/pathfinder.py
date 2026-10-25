@@ -5,11 +5,14 @@ import heapq
 
 
 class PathFinder:
+    """Find optimal paths and drone distributions on the graph."""
+
     def __init__(self, nb_drones: int):
+        """Initialize PathFinder with total drone count."""
         self.nb_drones = nb_drones
 
     def bfs(self, graph: Graph) -> Optional[List[str]]:
-
+        """Find the shortest unweighted path using breadth-first search."""
         start = graph.start_node
         if not start:
             return None
@@ -34,7 +37,7 @@ class PathFinder:
         return None
 
     def find_k_paths(self, graph: Graph, k: int) -> List[List[str]]:
-
+        """Find up to k unweighted paths using breadth-first search."""
         start = graph.start_node
         end = graph.end_node
         if not start or not end:
@@ -65,7 +68,7 @@ class PathFinder:
         start: str,
         end: str
     ) -> Optional[Tuple[float, List[str]]]:
-
+        """Find lowest-cost path using zone weights and priority gains."""
         pq: List[Tuple[float, int,  str, List[str]]] = []
         distance: Dict[str, float] = {start: 0.0}
         heapq.heappush(pq, (0.0, 0, start, [start]))
@@ -108,6 +111,7 @@ class PathFinder:
         return None
 
     def cost(self, graph: Graph, path: List[str]) -> float:
+        """Calculate total traversal cost of a path based on zone types."""
         cost: float = 0.0
         for i in range(len(path) - 1):
             node = path[i + 1]
@@ -128,7 +132,7 @@ class PathFinder:
         path: Tuple[float, List[str]],
         end: str
     ) -> List[List[str]]:
-
+        """Find up to k alternative loopless shortest paths."""
         paths: List[List[str]] = []
         condidate_paths: List[Tuple[float, List[str]]] = []
         seen: Set[Tuple[str, ...]] = set()
@@ -179,7 +183,7 @@ class PathFinder:
         return paths
 
     def brute_force(self, graph: Graph) -> Optional[Tuple[int, int]]:
-
+        """Find optimal drone distribution over paths to minimize makespan."""
         if not graph.start_node or not graph.end_node:
             return None
 
@@ -194,12 +198,6 @@ class PathFinder:
         paths = self.yen_algorithm(graph, 2, short_path, graph.end_node)
         if len(paths) <= 1:
             return (self.nb_drones, 0)
-
-        # فكرة الفحص:
-        shared_nodes = set(paths[0][1:-1]) & set(paths[1][1:-1])
-        for node in shared_nodes:
-            if graph.nodes[node].max_drones == 1:
-                return (self.nb_drones, 0)
 
         cost0 = int(self.cost(graph, paths[0]))
         cost1 = int(self.cost(graph, paths[1]))

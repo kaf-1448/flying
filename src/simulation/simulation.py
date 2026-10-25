@@ -3,6 +3,8 @@ from .graph import Graph
 
 
 class Drone:
+    """Drone instance tracking flight position and status."""
+
     def __init__(
         self,
         id: int,
@@ -11,6 +13,7 @@ class Drone:
         is_finished: bool,
         edge: Optional[Tuple[str, str]] = None
     ) -> None:
+        """Initialize drone state, path, position, and wait counter."""
         self.id: int = id
         self.path: List[str] = path
         self.position: int = 0
@@ -20,12 +23,15 @@ class Drone:
 
 
 class Simulation:
+    """Simulate turn-based drone movements across zones."""
+
     def __init__(
             self,
             assigned_path: list[list[str]],
             drone: Type[Drone],
             nb_drones: int,
             paths: List[List[str]]) -> None:
+        """Initialize simulation with assigned paths and drones."""
         self.assigned_path: List[List[str]] = assigned_path
         self.drones: List[Drone] = (
             [drone(i + 1, assigned_path[i], 0, False, None)
@@ -41,9 +47,11 @@ class Simulation:
 
     @staticmethod
     def make_edge(u: str, v: str) -> Tuple[str, str]:
+        """Return normalized undirected edge tuple."""
         return (u, v) if u < v else (v, u)
 
     def start_simulation(self, graph: Graph) -> None:
+        """Run simulation turns until all drones reach destination."""
 
         while any(not d.is_finished for d in self.drones):
 
@@ -144,6 +152,7 @@ class Simulation:
                                 'zone': f"{current_hub}-{next_hub}",
                                 'if_finished': False
                             })
+
                             continue
 
                     elif (
@@ -179,6 +188,7 @@ class Simulation:
                         'zone': d.path[d.position],
                         'if_finished': d.is_finished
                     })
+
             self.turns_history.append(current_state)
 
             if moves:
