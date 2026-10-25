@@ -184,13 +184,14 @@ class MapParser:
                                     if is_zone_there in ALLOWED_ZONES:
                                         zone = is_zone_there
                                     else:
+                                        allowed = ', '.join(
+                                            sorted(ALLOWED_ZONES)
+                                        )
                                         raise MetaDataError(
                                             f"Error in line {num}: "
                                             "invalid zone type "
                                             f"'{is_zone_there}', "
-                                            "must be one of: "
-                                            f"{', '.join(sorted(
-                                                ALLOWED_ZONES))}"
+                                            f"must be one of: {allowed}"
                                         )
 
                                     seen.add('zone')
